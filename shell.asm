@@ -292,8 +292,21 @@ hex_next:
     jmp input1
 
 qei:
-    hlt
-
+    mov ax, 0x5301    
+    xor bx, bx         
+    int 0x15       
+    jc .error_shutdown 
+    mov ax, 0x530E   
+    xor bx, bx      
+    mov cx, 0x0102 
+    int 0x15          
+    jc .error_shutdown
+    mov ax, 0x5307      
+    mov bx, 0x0001      
+    mov cx, 0x0003      
+    int 0x15           
+.error_shutdown:
+    cli               
 bin:
     cli
     xor ax, ax
