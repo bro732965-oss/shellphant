@@ -155,23 +155,23 @@ write_disk:
     call print_string
     jmp input1
 
-
 scan_mem:
-    cli
-    xor ax, ax
-    mov ds, ax
+    mov ax, 0x0000
     mov es, ax
-    mov ss, ax
-    mov sp, 0x7C00
-    sti
-
-    mov word [scan_seg], 0x0000
-    mov word [scan_line], 0
-
-.scan_loop:
-    mov ax, [scan_seg]
-    mov es, ax
-    xor bx, bx
+    mov bx, 0x7C00
+    
+    mov cx, 16
+.loop:
+    mov al, [es:bx]
+    call print_hex_byte
+    mov al, ' '
+    call print_char
+    inc bx
+    loop .loop
+    
+    mov si, done_msg
+    call print_string
+    jmp input1
 
 .byte_loop:
     mov al, [es:bx]
