@@ -307,6 +307,7 @@ qei:
     int 0x15           
 .error_shutdown:
     cli               
+
 bin:
     cli
     xor ax, ax
@@ -527,9 +528,8 @@ sim2    db 0
 sim3    db 0
 sim4    db 0
 
-msg     db '=', 0
+msg     db '', 0
 ok_msg  db '+', 0x0D, 0x0A, 0
 err_msg db '-', 0x0D, 0x0A, 0
 
 buffer equ 0x8000   
-
