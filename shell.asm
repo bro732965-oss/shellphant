@@ -155,6 +155,7 @@ write_disk:
     call print_string
     jmp input1
 
+
 scan_mem:
     cli
     xor ax, ax
@@ -176,8 +177,11 @@ scan_mem:
     mov al, [es:bx]
     test al, al
     jz .next
-    call print_addr
     
+    push bx             ; Сохраняем bx перед выводом
+    call print_addr
+    pop bx              ; Восстанавливаем bx после вывода
+
     inc word [scan_line]
     cmp word [scan_line], 20
     jl .next
@@ -200,12 +204,15 @@ scan_mem:
     mov si, done_msg
     call print_string
     jmp input1
+
 wait_key:
     mov ah, 0x00
     int 0x16
     ret
 
 print_addr:
+    push ax
+    push bx
     mov ax, es
     call print_hex_word
     mov al, ':'
@@ -219,7 +226,12 @@ print_addr:
     mov al, 0x0A
     mov ah, 0x0E
     int 0x10
+    pop bx
+    pop ax
     ret
+
+
+
 
 print_hex_word:
     push ax
