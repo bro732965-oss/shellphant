@@ -154,6 +154,7 @@ write_disk:
     mov si, ok_msg
     call print_string
     jmp input1
+
 scan_mem:
     cli
     xor ax, ax
@@ -170,30 +171,22 @@ scan_mem:
     mov ax, [scan_seg]
     mov es, ax
     xor bx, bx
-    xor dl, dl
 
 .byte_loop:
     mov al, [es:bx]
     test al, al
-    jnz .nonzero
-    xor dl, dl
-    jmp .next
-.nonzero:
-    test dl, dl
-    jnz .skip
+    jz .next
     call print_addr
-
+    
     inc word [scan_line]
     cmp word [scan_line], 20
-    jl .skip
+    jl .next
     mov word [scan_line], 0
     call wait_key
-
+    
     mov ax, [scan_seg]
     mov es, ax
 
-.skip:
-    mov dl, 1
 .next:
     inc bx
     jnz .byte_loop
@@ -207,7 +200,6 @@ scan_mem:
     mov si, done_msg
     call print_string
     jmp input1
-
 wait_key:
     mov ah, 0x00
     int 0x16
