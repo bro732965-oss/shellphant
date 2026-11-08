@@ -108,21 +108,93 @@ download_file:
     mov ah, 0x02
     mov al, 20
     mov ch, 0
-    mov cl, 100
+    mov cl, 1
     mov dh, 0
-    mov dl, 0x00
+    mov dl, 0x01
     int 0x13
     jc .disk_error
 
     call 0x2000:0x0000
 
+    mov di, 0x8000
+    mov al, 0xFF
+    mov cx, 6
+    rep stosb
+    mov al, 0x00
+    mov cx, 6
+    rep stosb
+    mov al, 0x08
+    stosb
+    mov al, 0x00
+    stosb
+
+    mov al, 0x45
+    stosb
+    mov al, 0x00
+    stosb
+    mov al, 0x00
+    stosb
+    mov al, 0x3C
+    stosb
+    mov al, 0x00
+    stosb
+    mov al, 0x00
+    stosb
+    mov al, 0x40
+    stosb
+    mov al, 0x06
+    stosb
+    mov al, 0x00
+    stosw
+
+    mov si, ip_buffer
+    mov cx, 4
+.copy_ip:
+    lodsb
+    stosb
+    loop .copy_ip
+
+    mov al, 10
+    stosb
+    mov al, 0
+    stosb
+    mov al, 2
+    stosb
+    mov al, 2
+    stosb
+
+    mov al, 0x00
+    stosw
+    mov al, 0x00
+    stosb
+    mov al, 0x50
+    stosb
+    mov al, 0x00
+    stosw
+    mov al, 0x00
+    stosw
+    mov al, 0x50
+    stosb
+    mov al, 0x02
+    stosb
+    mov al, 0x20
+    stosw
+    mov al, 0x00
+    stosw
+    mov al, 0x00
+    stosw
+
+    mov ah, 0x01
+    mov cx, 60
+    mov es, 0x0000
+    mov di, 0x8000
+    int 0x60
+    jc .send_error
+
     mov ah, 0x02
-    mov bx, 0x8000
-    mov ax, 0x0000
-    mov es, ax
     mov cx, 1500
     int 0x60
-    jc .no_packet
+    jc .recv_error
 
     mov ah, 0x00
     mov dl, 0x00
@@ -195,7 +267,11 @@ download_file:
     mov si, err_msg
     call print_string
     jmp input1
-.no_packet:
+.send_error:
+    mov si, err_msg
+    call print_string
+    jmp input1
+.recv_error:
     mov si, err_msg
     call print_string
     jmp input1
@@ -210,6 +286,7 @@ download_file:
     mov si, err_msg
     call print_string
     jmp input1
+
 read_ozy:
  mov ah, 0x02        
  mov ax, [sim2]
