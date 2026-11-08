@@ -90,7 +90,126 @@ crt_tbl:
     je scan_mem
     cmp byte [cur], 'l'
     je bin1
+    cmp byte [cur], 'i'
+    je set_ip
+    cmp byte [cur], 'n'  
+    je dowload_file  
     jmp error
+
+download_file:
+    mov ax, cs
+    mov ds, ax
+    cmp byte [ip_buffer], 0
+    je .no_ip
+
+    mov ax, 0x2000
+    mov es, ax
+    xor bx, bx
+    mov ah, 0x02
+    mov al, 20
+    mov ch, 0
+    mov cl, 100
+    mov dh, 0
+    mov dl, 0x00
+    int 0x13
+    jc .disk_error
+
+    call 0x2000:0x0000
+
+    mov ah, 0x02
+    mov bx, 0x8000
+    mov ax, 0x0000
+    mov es, ax
+    mov cx, 1500
+    int 0x60
+    jc .no_packet
+
+    mov ah, 0x00
+    mov dl, 0x00
+    int 0x13
+
+    mov ch, 1
+    mov dh, 0
+    mov cl, 1
+.find_loop:
+    mov ah, 0x02
+    mov al, 1
+    mov dl, 0x00
+    mov bx, 0x8000
+    push ax
+    mov ax, 0x0000
+    mov es, ax
+    pop ax
+    int 0x13
+    jc .next_sector
+
+    push cx
+    mov si, 0x8000
+    mov cx, 512
+.check_empty:
+    lodsb
+    test al, al
+    jnz .not_empty
+    loop .check_empty
+    pop cx
+    jmp .found_sector
+
+.not_empty:
+    pop cx
+.next_sector:
+    inc cl
+    cmp cl, 19
+    jne .find_loop
+    mov cl, 1
+    inc dh
+    cmp dh, 2
+    jne .find_loop
+    mov dh, 0
+    inc ch
+    cmp ch, 80
+    jne .find_loop
+    jmp .no_space
+
+.found_sector:
+    mov [free_cyl], ch
+    mov [free_head], dh
+    mov [free_sect], cl
+    mov ah, 0x03
+    mov al, 1
+    mov ch, [free_cyl]
+    mov dh, [free_head]
+    mov cl, [free_sect]
+    mov dl, 0x00
+    mov bx, 0x8000
+    push ax
+    mov ax, 0x0000
+    mov es, ax
+    pop ax
+    int 0x13
+    jc .disk_error
+    mov si, ok_msg
+    call print_string
+    jmp input1
+
+.no_ip:
+    mov si, err_msg
+    call print_string
+    jmp input1
+.no_packet:
+    mov si, err_msg
+    call print_string
+    jmp input1
+.disk_error:
+    mov ah, 0x00
+    mov dl, 0x00
+    int 0x13
+    mov si, err_msg
+    call print_string
+    jmp input1
+.no_space:
+    mov si, err_msg
+    call print_string
+    jmp input1
 read_ozy:
  mov ah, 0x02        
  mov ax, [sim2]
@@ -367,7 +486,46 @@ print_hex:
     mov ah, 0x0E
     int 0x10
     ret
-
+set_ip:
+    mov ax, cs
+    mov ds, ax
+    mov si, msg
+    call print_string
+    mov di, ip_buffer
+    xor cx, cx
+.read_ip:
+    mov ah, 0x00
+    int 0x16
+    cmp al, 0x0D
+    je .done
+    cmp al, 0x08
+    je .backspace
+    cmp cx, 15
+    je .read_ip
+    mov [di], al
+    inc di
+    inc cx
+    mov ah, 0x0E
+    int 0x10
+    jmp .read_ip
+.backspace:
+    cmp cx, 0
+    je .read_ip
+    dec di
+    dec cx
+    mov ah, 0x0E
+    mov al, 0x08
+    int 0x10
+    mov al, ' '
+    int 0x10
+    mov al, 0x08
+    int 0x10
+    jmp .read_ip
+.done:
+    mov byte [di], 0
+    mov si, ok_msg
+    call print_string
+    jmp input1
 dir:
     cli
     xor ax, ax
@@ -535,5 +693,8 @@ sim4    db 0
 msg     db '', 0
 ok_msg  db '+', 0x0D, 0x0A, 0
 err_msg db '-', 0x0D, 0x0A, 0
-
+ip_buffer db 16 dup(0)
+free_cyl  db 0
+free_head db 0
+free_sect db 0
 buffer equ 0x8000   
