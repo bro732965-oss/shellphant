@@ -92,7 +92,211 @@ crt_tbl:
     je bin1
     cmp byte [cur], 's'
     je set_server_ip
+    cmp byte [cur], 'n'
+    je download_file
     jmp error
+
+download_file:
+    mov ax, cs
+    mov ds, ax
+    cmp byte [ip_buffer], 0
+    je .no_ip
+
+    mov ax, 0x2000
+    mov es, ax
+    xor bx, bx
+    mov ah, 0x02
+    mov al, 20
+    mov ch, 0
+    mov cl, 1
+    mov dh, 0
+    mov dl, 0x01
+    int 0x13
+    jc .disk_error
+
+    call 0x2000:0x0000
+
+    mov di, 0x8000
+    mov al, 0xFF
+    mov cx, 6
+    rep stosb
+    mov al, 0x00
+    mov cx, 6
+    rep stosb
+    mov al, 0x08
+    stosb
+    mov al, 0x00
+    stosb
+
+    mov al, 0x45
+    stosb
+    mov al, 0x00
+    stosb
+    mov al, 0x00
+    stosb
+    mov al, 0x3C
+    stosb
+    mov al, 0x00
+    stosb
+    mov al, 0x00
+    stosb
+    mov al, 0x40
+    stosb
+    mov al, 0x06
+    stosb
+    mov al, 0x00
+    stosw
+
+    mov si, ip_buffer
+    mov cx, 4
+.copy_ip:
+    lodsb
+    stosb
+    loop .copy_ip
+
+    mov al, 10
+    stosb
+    mov al, 0
+    stosb
+    mov al, 2
+    stosb
+    mov al, 2
+    stosb
+
+    mov al, 0x00
+    stosw
+    mov al, 0x1F
+    stosb
+    mov al, 0x90
+    stosb
+    mov al, 0x00
+    stosw
+    mov al, 0x00
+    stosw
+    mov al, 0x50
+    stosb
+    mov al, 0x02
+    stosb
+    mov al, 0x20
+    stosw
+    mov al, 0x00
+    stosw
+    mov al, 0x00
+    stosw
+
+    mov si, http_get
+.copy_http:
+    lodsb
+    test al, al
+    jz .http_done
+    stosb
+    jmp .copy_http
+.http_done:
+
+    mov ah, 0x01
+    mov cx, 200
+    mov es, 0x0000
+    mov di, 0x8000
+    int 0x60
+    jc .send_error
+
+    mov ah, 0x02
+    mov cx, 1500
+    int 0x60
+    jc .recv_error
+
+    mov ah, 0x00
+    mov dl, 0x00
+    int 0x13
+
+    mov ch, 1
+    mov dh, 0
+    mov cl, 1
+.find_loop:
+    mov ah, 0x02
+    mov al, 1
+    mov dl, 0x00
+    mov bx, 0x8000
+    push ax
+    mov ax, 0x0000
+    mov es, ax
+    pop ax
+    int 0x13
+    jc .next_sector
+
+    push cx
+    mov si, 0x8000
+    mov cx, 512
+.check_empty:
+    lodsb
+    test al, al
+    jnz .not_empty
+    loop .check_empty
+    pop cx
+    jmp .found_sector
+
+.not_empty:
+    pop cx
+.next_sector:
+    inc cl
+    cmp cl, 19
+    jne .find_loop
+    mov cl, 1
+    inc dh
+    cmp dh, 2
+    jne .find_loop
+    mov dh, 0
+    inc ch
+    cmp ch, 80
+    jne .find_loop
+    jmp .no_space
+
+.found_sector:
+    mov [free_cyl], ch
+    mov [free_head], dh
+    mov [free_sect], cl
+    mov ah, 0x03
+    mov al, 1
+    mov ch, [free_cyl]
+    mov dh, [free_head]
+    mov cl, [free_sect]
+    mov dl, 0x00
+    mov bx, 0x8000
+    push ax
+    mov ax, 0x0000
+    mov es, ax
+    pop ax
+    int 0x13
+    jc .disk_error
+    mov si, ok_msg
+    call print_string
+    jmp input1
+
+.no_ip:
+    mov si, err_msg
+    call print_string
+    jmp input1
+.send_error:
+    mov si, err_msg
+    call print_string
+    jmp input1
+.recv_error:
+    mov si, err_msg
+    call print_string
+    jmp input1
+.disk_error:
+    mov ah, 0x00
+    mov dl, 0x00
+    int 0x13
+    mov si, err_msg
+    call print_string
+    jmp input1
+.no_space:
+    mov si, err_msg
+    call print_string
+    jmp input1
+
+http_get db 'GET / HTTP/1.0', 0x0D, 0x0A, 0x0D, 0x0A, 0
 
 set_server_ip:
     mov ax, cs
