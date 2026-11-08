@@ -93,7 +93,7 @@ crt_tbl:
     cmp byte [cur], 'i'
     je set_ip
     cmp byte [cur], 'n'  
-    je dowload_file  
+    je download_file  
     jmp error
 
 download_file:
