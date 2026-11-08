@@ -575,7 +575,11 @@ sim1    db 0
 sim2    db 0
 sim3    db 0
 sim4    db 0
-
+ip_buffer db 16 dup(0)
+free_cyl  db 0
+free_head db 0
+free_sect db 0
+msg_server db ': ', 0
 msg     db '', 0
 ok_msg  db '+', 0x0D, 0x0A, 0
 err_msg db '-', 0x0D, 0x0A, 0
