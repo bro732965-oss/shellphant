@@ -532,7 +532,7 @@ sim2    db 0
 sim3    db 0
 sim4    db 0
 
-msg     db '', 0
+msg     db '>', 0
 ok_msg  db '+', 0x0D, 0x0A, 0
 err_msg db '-', 0x0D, 0x0A, 0
 
