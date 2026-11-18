@@ -32,7 +32,6 @@ nasm -f bin stage1.asm -o stage1.bin; cat stage1.bin shell.bin > final_os.img; t
 
 command:
 db```
-Команда Название Что делает
 d Disk Read Читает сектор с диска в буфер 0x8000
 w Disk Write Записывает буфер 0x8000 на диск
 b Boot Загружает сектор в 0x1000:0 и передаёт управление
