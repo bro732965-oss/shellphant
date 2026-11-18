@@ -30,7 +30,7 @@ EOF
 nasm -f bin stage1.asm -o stage1.bin; cat stage1.bin shell.bin > final_os.img; truncate -s 1440K final_os.img; qemu-system-x86_64 -drive file=final_os.img,format=raw,if=floppy -boot a -vnc :1```
 
 command:
-db```
+```
 d Disk Read Читает сектор с диска в буфер 0x8000
 w Disk Write Записывает буфер 0x8000 на диск
 b Boot Загружает сектор в 0x1000:0 и передаёт управление
@@ -43,4 +43,4 @@ r Read sector → RAM Читает сектор сразу в указанный
 q Quit / Power Off Выключает ПК через APM (int 0x15, 0x5307)```
 
 совместимость: 
-а```на все устройства работающие на BIOS```
+```на все устройства работающие на BIOS```
