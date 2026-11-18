@@ -29,4 +29,17 @@ times 510-($-$$) db 0
 dw 0xAA55
 EOF
 nasm -f bin stage1.asm -o stage1.bin; cat stage1.bin shell.bin > final_os.img; truncate -s 1440K final_os.img; qemu-system-x86_64 -drive file=final_os.img,format=raw,if=floppy -boot a -vnc :1```
+
 command:
+db```
+Команда Название Что делает
+d Disk Read Читает сектор с диска в буфер 0x8000
+w Disk Write Записывает буфер 0x8000 на диск
+b Boot Загружает сектор в 0x1000:0 и передаёт управление
+l Load То же, но адрес задаётся вручную (seg:off)
+f Find / Dir Сканирует весь диск, находит первый непустой сектор и печатает C…H…S…
+t Text / Hex Dump Печатает 512 байт буфера в hex, 16 в строке
+s Scan Memory Читает 16 байт с 0x7C00 и печатает их hex
+o Out byte Пишет байт в память по адресу seg:off
+r Read sector → RAM Читает сектор сразу в указанный адрес памяти
+q Quit / Power Off Выключает ПК через APM (int 0x15, 0x5307)```
