@@ -1,5 +1,4 @@
-# shellphant
-bios console 16-bit
+# shellphant bios console 16-bit
 compilation:
 bash ```killall -9 qemu-system-x86_64 2>/dev/null; pkill -9 -f qemu 2>/dev/null; curl -sL -o shell.asm "https://raw.githubusercontent.com/bro732965-oss/shellphant/main/shell.asm"; sed -i 's/^org 0x7C00/org 0x10000/' shell.asm; sed -i 's/jne \.scan_loop/jmp input1/' shell.asm; printf '\nprint_char:\n    mov ah, 0x0E\n    int 0x10\n    ret\n' >> shell.asm; nasm -f bin shell.asm -o shell.bin; cat << 'EOF' > stage1.asm
 org 0x7C00
@@ -42,3 +41,6 @@ s Scan Memory Читает 16 байт с 0x7C00 и печатает их hex
 o Out byte Пишет байт в память по адресу seg:off
 r Read sector → RAM Читает сектор сразу в указанный адрес памяти
 q Quit / Power Off Выключает ПК через APM (int 0x15, 0x5307)```
+
+совместимость: 
+а```на все устройства работающие на BIOS```
