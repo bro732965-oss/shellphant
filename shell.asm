@@ -90,7 +90,75 @@ crt_tbl:
     je scan_mem
     cmp byte [cur], 'l'
     je bin1
+    cmp byte [cur], 'i'
+    je sys_info
     jmp error
+sys_info:
+    mov si, msg
+    call print_string
+    int 0x12
+    call print_dec_word
+    mov si, info_kb
+    call print_string
+
+    int 0x11
+    push ax
+
+    mov si, msg
+    call print_string
+    pop ax
+    push ax
+    test ax, 0x0002
+    jz .no_fpu
+    mov si, ok_msg
+    jmp .prn_fpu
+.no_fpu:
+    mov si, err_msg
+.prn_fpu:
+    call print_string
+
+    mov si, msg
+    call print_string
+    pop ax
+    test ax, 0x0001
+    jz .zero_fdd
+    shr ax, 6
+    and ax, 0x03
+    inc ax
+    jmp .prn_fdd
+.zero_fdd:
+    xor ax, ax
+.prn_fdd:
+    call print_dec_word
+    call print_crlf
+
+    jmp input1
+
+print_dec_word:
+    push ax
+    push bx
+    push cx
+    push dx
+    mov bx, 10
+    xor cx, cx
+.div:
+    xor dx, dx
+    div bx
+    push dx
+    inc cx
+    test ax, ax
+    jnz .div
+.prn:
+    pop dx
+    add dl, '0'
+    mov al, dl
+    call print_char
+    loop .prn
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
 read_ozy:
  mov ah, 0x02        
  mov ax, [sim2]
@@ -178,9 +246,9 @@ scan_mem:
     test al, al
     jz .next
     
-    push bx             ; Сохраняем bx перед выводом
+    push bx            
     call print_addr
-    pop bx              ; Восстанавливаем bx после вывода
+    pop bx             
 
     inc word [scan_line]
     cmp word [scan_line], 20
@@ -201,7 +269,7 @@ scan_mem:
     cmp ax, 0x1000
     jne .scan_loop
 
-    mov si, done_msg
+    mov si, ok_msg
     call print_string
     jmp input1
 
@@ -262,10 +330,7 @@ print_hex_nibble:
     int 0x10
     ret
 
-scan_seg  dw 0
-scan_line dw 0
 
-done_msg db ' done', 0x0D, 0x0A, 0
 text:
     mov si, buffer
     mov cx, 512
@@ -535,5 +600,11 @@ sim4    db 0
 msg     db '>', 0
 ok_msg  db '+', 0x0D, 0x0A, 0
 err_msg db '-', 0x0D, 0x0A, 0
+
+
+info_kb  db ' #', 0x0D, 0x0A, 0
+scan_seg  dw 0
+scan_line dw 0
+
 
 buffer equ 0x8000   
